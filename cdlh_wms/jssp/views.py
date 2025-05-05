@@ -11,7 +11,7 @@ from io import BytesIO
 from datetime import datetime
 from django.urls import reverse
 
-# 导入ReportLab相关库
+# 导入PDF相关库
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib import colors
@@ -27,8 +27,8 @@ from reportlab.platypus import Image as RLImage
 import qrcode
 from PIL import Image
 
-# 从views_export_pdf模块导入中文字体注册函数
-from .views_export_pdf import register_chinese_font
+# 从utils模块导入中文字体注册函数
+from .utils import register_chinese_font
 
 # Create your views here.
 

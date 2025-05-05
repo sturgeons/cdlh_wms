@@ -7,8 +7,9 @@ import tempfile
 from django.http import HttpResponse
 import qrcode
 
-from jssp.models import delivery_order, delivery_order_detail, partno
-from jssp.views import filter_records_by_start_id, get_all_data, get_test_data_for_export, limit_records_count
+from .models import delivery_order, delivery_order_detail, partno
+# 避免循环导入
+import jssp.views as views_module
 # 导入ReportLab相关库
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4, landscape
@@ -17,62 +18,8 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import Image as RLImage
 
-# 注册中文字体函数
-def register_chinese_font():
-    """注册中文字体并返回字体名称"""
-    system = platform.system()
-    font_paths = []
-    
-    if system == 'Windows':
-        # Windows系统的字体路径
-        font_paths = [
-            os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'simsun.ttc'),
-            os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'simhei.ttf'),
-            os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'msyh.ttc')
-        ]
-    else:
-        # Linux/Ubuntu系统的中文字体路径
-        font_paths = [
-            '/usr/share/fonts/truetype/arphic/uming.ttc',  # 文泉驿Unicode明体
-            '/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc',  # 文泉驿正黑
-            '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',  # Noto Sans CJK
-            '/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf',  # Droid Sans
-            '/usr/share/fonts/truetype/arphic/ukai.ttc',  # AR PL UKai
-            '/usr/share/fonts/wqy-microhei/wqy-microhei.ttc'  # 文泉驿微米黑
-        ]
-    
-    # 尝试逐个注册字体，直到成功
-    font_name = 'Helvetica'  # 默认字体
-    for font_path in font_paths:
-        try:
-            if os.path.exists(font_path):
-                if 'simsun' in font_path.lower() or 'uming' in font_path.lower():
-                    font_name = 'SimSun'
-                elif 'wqy-zenhei' in font_path.lower():
-                    font_name = 'WQY-ZenHei'
-                elif 'wqy-microhei' in font_path.lower():
-                    font_name = 'WQY-MicroHei'
-                elif 'notosans' in font_path.lower():
-                    font_name = 'NotoSans'
-                elif 'droid' in font_path.lower():
-                    font_name = 'DroidSans'
-                elif 'simhei' in font_path.lower() or 'ukai' in font_path.lower():
-                    font_name = 'SimHei'
-                elif 'msyh' in font_path.lower():
-                    font_name = 'MicrosoftYaHei'
-                else:
-                    font_name = 'ChineseFont'
-                
-                pdfmetrics.registerFont(TTFont(font_name, font_path))
-                print(f"成功注册中文字体: {font_path}")
-                return font_name
-        except Exception as e:
-            print(f"注册字体失败 {font_path}: {str(e)}")
-            continue
-    
-    # 如果所有字体都注册失败
-    print("警告: 无法注册中文字体，将使用默认字体。中文可能无法正确显示。")
-    return font_name
+# 从utils模块导入字体注册函数
+from .utils import register_chinese_font
 
 def generate_qr_code(text, file_prefix):
         qr = qrcode.QRCode(
@@ -103,10 +50,10 @@ def generate_delivery_order_pdf(request):
     records_all = []
     if request.GET.get('data_source', '') == 'test':
         # 使用测试数据
-        data = get_test_data_for_export(request)
+        data = views_module.get_test_data_for_export(request)
     else:
         # 使用实际数据
-        data = get_all_data(records_all, 1)
+        data = views_module.get_all_data(records_all, 1)
         
     # 倒序
     data['records'].reverse()
@@ -116,8 +63,8 @@ def generate_delivery_order_pdf(request):
     # 应用筛选逻辑
     filtered_records = data["records"]
     # 应用筛选和限制
-    filtered_records = filter_records_by_start_id(filtered_records, start_id, data)
-    filtered_records = limit_records_count(
+    filtered_records = views_module.filter_records_by_start_id(filtered_records, start_id, data)
+    filtered_records = views_module.limit_records_count(
         filtered_records, limit_count, data["records"]
     )    
     # 存储发运单到数据库 存储filtered_records 到 delivery_order_detail
