@@ -27,6 +27,9 @@ from reportlab.platypus import Image as RLImage
 import qrcode
 from PIL import Image
 
+# 从views_export_pdf模块导入中文字体注册函数
+from .views_export_pdf import register_chinese_font
+
 # Create your views here.
 
 
@@ -399,27 +402,8 @@ def export_parts_pdf(request):
     p = canvas.Canvas(buffer, pagesize=A4)
     width, height = A4
 
-    # 注册中文字体
-    try:
-        # 检测操作系统，获取正确的宋体字体路径
-        system = platform.system()
-        if system == "Windows":
-            font_path = os.path.join(
-                os.environ.get("WINDIR", "C:\\Windows"), "Fonts", "simsun.ttc"
-            )
-        else:
-            # 对于其他操作系统可能需要调整字体路径
-            font_path = "/usr/share/fonts/truetype/arphic/uming.ttc"
-
-        # 注册宋体
-        pdfmetrics.registerFont(TTFont("SimSun", font_path))
-        font_name = "SimSun"
-
-        print(f"注册字体成功: {font_path}")
-    except Exception as e:
-        # 如果字体注册失败，记录错误并使用默认字体
-        print(f"注册字体失败: {str(e)}")
-        font_name = "Helvetica"
+    # 注册中文字体 - 使用复用的函数
+    font_name = register_chinese_font()
 
     # 设置标题
     p.setFont(font_name, 20)
