@@ -7,7 +7,7 @@ import tempfile
 from django.http import HttpResponse
 import qrcode
 
-from jssp.models import partno
+from jssp.models import delivery_order, delivery_order_detail, partno
 from jssp.views import filter_records_by_start_id, get_all_data, get_test_data_for_export, limit_records_count
 # 导入ReportLab相关库
 from reportlab.pdfgen import canvas
@@ -37,12 +37,11 @@ def generate_qr_code(text, file_prefix):
         
         return temp_file.name
     
-def export_jss_table_pdf(request):
-    """导出JSS调度系统表格数据到PDF，使用Canvas直接绘制，从第二页开始绘制表格"""
+def generate_delivery_order_pdf(request):
+    """导出发运单PDF"""
     # 获取筛选参数
     start_id = request.GET.get('start_id', '')
     limit_count = request.GET.get('limit_count', '')
-    filter_type = request.GET.get('filter_type', '')
     
     db_partno_list=partno.objects.all()
     # 获取与首页相同的数据
@@ -65,23 +64,44 @@ def export_jss_table_pdf(request):
     filtered_records = filter_records_by_start_id(filtered_records, start_id, data)
     filtered_records = limit_records_count(
         filtered_records, limit_count, data["records"]
-    )
-    
-    # 应用类型筛选
-    if filter_type:
-        if filter_type == 'left':
-            filtered_records = [r for r in filtered_records if 'partno_left' in r and r['partno_left']]
-        elif filter_type == 'right':
-            filtered_records = [r for r in filtered_records if 'partno_right' in r and r['partno_right']]
-        elif filter_type == 'both':
-            filtered_records = [r for r in filtered_records if 
-                              ('partno_left' in r and r['partno_left']) and 
-                              ('partno_right' in r and r['partno_right'])]
-        elif filter_type == 'neither':
-            filtered_records = [r for r in filtered_records if 
-                              (not 'partno_left' in r or not r['partno_left']) and 
-                              (not 'partno_right' in r or not r['partno_right'])]
-    
+    )    
+    # 存储发运单到数据库 存储filtered_records 到 delivery_order_detail
+    order_id=delivery_order.objects.create(
+                order_time=datetime.now(),
+                order_status='未完成',
+                order_type='JSS调度系统',
+                order_start_id=start_id,
+                order_size=len(filtered_records),
+            )
+    for record in filtered_records:
+        delivery_order_detail.objects.create(
+            order_id=order_id,
+            lfdnr=record.get('lfdnr', ''),
+            vin=record.get('vin', ''),
+            part_color=record.get('partColor_left', ''),
+            car_type=record.get('car_type_left', ''),
+            part_ascii=record.get('partno_ascii_left', ''),
+            mzeit=record.get('mzeit', ''),
+            position=record.get('pointStatus', ''),
+            knr=record.get('knr', ''),
+            factory=record.get('werk', ''),
+            product_line=record.get('productLine', ''),
+            order_no=record.get('spj', ''),
+            left_part_no=record.get('partno_left', ''),
+            left_part_name=record.get('partname_left', ''),
+            left_part_type=record.get('parttype_left', ''),
+            left_part_code=record.get('partCode_left', ''),
+            left_part_ascii=record.get('partno_ascii_left', ''),
+            left_part_color=record.get('partColor_left', ''),
+            right_part_no=record.get('partno_right', ''),
+            right_part_name=record.get('partname_right', ''),
+            right_part_type=record.get('parttype_right', ''),
+            right_part_code=record.get('partCode_right', ''),
+            right_part_ascii=record.get('partno_ascii_right', ''),
+            right_part_color=record.get('partColor_right', ''),
+        )
+
+
     # 创建一个HTTP响应，content_type设置为PDF
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="jss_table_data.pdf"'

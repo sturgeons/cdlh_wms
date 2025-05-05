@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>发运单管理 - CDLH WMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+        
+        * {
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%);
+        }
+        
+        .bg-gradient-page {
+            background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%);
+        }
+        
+        .card-shadow {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.6s ease-in-out;
+            opacity: 0;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .table-shadow {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+        
+        .table-hover tr:hover {
+            background-color: rgba(14, 165, 233, 0.05);
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .status-pending {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: #92400e;
+        }
+        
+        .status-completed {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: #065f46;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-page min-h-screen">
+    <!-- 顶部导航 -->
+    <nav class="bg-gradient-primary text-white shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i class="fas fa-truck-loading text-2xl mr-2"></i>
+                        <span class="font-bold text-xl tracking-tight">JSS调度系统</span>
+                    </div>
+                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                        <a href="/" class="px-3 py-2 text-sm font-medium flex items-center hover:text-primary-200 transition">
+                            <i class="fas fa-home mr-1.5"></i> 首页
+                        </a>
+                        <a href="{% url 'parts_management' %}" class="px-3 py-2 text-sm font-medium flex items-center hover:text-primary-200 transition">
+                            <i class="fas fa-cogs mr-1.5"></i> 零件管理
+                        </a>
+                        <a href="{% url 'delivery_order_management' %}" class="px-3 py-2 text-sm font-medium flex items-center border-b-2 border-white active-nav">
+                            <i class="fas fa-shipping-fast mr-1.5"></i> 发运单管理
+                        </a>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <a href="/admin" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-700 shadow-sm hover:bg-primary-800 transition">
+                            <i class="fas fa-user-shield mr-1.5"></i>
+                            管理员入口
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 移动端菜单 -->
+    <div class="sm:hidden bg-primary-800 text-white">
+        <div class="px-2 pt-2 pb-3 space-y-1 flex justify-around">
+            <a href="/" class="block px-3 py-2 rounded-md text-base font-medium text-center">
+                <i class="fas fa-home block mx-auto text-lg mb-1"></i>
+                <span>首页</span>
+            </a>
+            <a href="{% url 'parts_management' %}" class="block px-3 py-2 rounded-md text-base font-medium text-center">
+                <i class="fas fa-cogs block mx-auto text-lg mb-1"></i>
+                <span>零件管理</span>
+            </a>
+            <a href="{% url 'delivery_order_management' %}" class="block px-3 py-2 rounded-md text-base font-medium text-center bg-primary-700">
+                <i class="fas fa-shipping-fast block mx-auto text-lg mb-1"></i>
+                <span>发运单管理</span>
+            </a>
+            <a href="/admin" class="block px-3 py-2 rounded-md text-base font-medium text-center">
+                <i class="fas fa-user-shield block mx-auto text-lg mb-1"></i>
+                <span>管理</span>
+            </a>
+        </div>
+    </div>
+    
+    <!-- 页面内容 -->
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <!-- 页面标题和概述 -->
+        <div class="mb-8 fade-in" style="animation-delay: 0.1s; opacity: 1;">
+            <div class="flex items-center space-x-2 text-primary-600 mb-2">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>首页</span>
+                <i class="fas fa-angle-right text-xs"></i>
+                <span class="font-medium">发运单管理</span>
+            </div>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2">发运单管理</h1>
+                    <p class="text-gray-600">查看和管理所有JSS调度系统生成的发运单</p>
+                </div>
+                <div class="mt-4 sm:mt-0 flex space-x-2">
+                    <button id="refreshBtn" class="flex items-center justify-center py-2 px-4 bg-primary-600 text-white rounded-lg shadow hover:bg-primary-700 focus:outline-none transition">
+                        <i class="fas fa-sync-alt mr-2"></i> 刷新数据
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 过滤控制面板 -->
+        <div class="bg-white rounded-xl p-6 mb-8 card-shadow fade-in" style="animation-delay: 0.2s; opacity: 1;">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">筛选条件</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label for="date-filter" class="block text-sm font-medium text-gray-700 mb-1">日期范围</label>
+                    <select id="date-filter" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500">
+                        <option value="all">全部时间</option>
+                        <option value="today">今天</option>
+                        <option value="week">本周</option>
+                        <option value="month">本月</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="status-filter" class="block text-sm font-medium text-gray-700 mb-1">状态</label>
+                    <select id="status-filter" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500">
+                        <option value="all">全部状态</option>
+                        <option value="pending">未完成</option>
+                        <option value="completed">已完成</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="search-filter" class="block text-sm font-medium text-gray-700 mb-1">快速搜索</label>
+                    <div class="relative rounded-md shadow-sm">
+                        <input type="text" id="search-filter" placeholder="搜索起始业务号..." 
+                            class="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500">
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                            <i class="fas fa-search text-gray-400"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 发运单列表 -->
+        <div class="bg-white rounded-xl overflow-hidden card-shadow fade-in" style="animation-delay: 0.3s; opacity: 1;">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 table-hover">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                ID
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                创建时间
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                类型
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                起始业务号
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                记录数量
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                左侧零件码
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                右侧零件码
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                状态
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                操作
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for order in orders %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">{{ order.id }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ order.order_time|date:"Y-m-d H:i:s" }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ order.order_type }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ order.order_start_id }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ order.order_size }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ order.left_part_sn }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ order.right_part_sn }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if order.order_status == '未完成' %}
+                                <span class="status-badge status-pending">
+                                    <i class="fas fa-clock mr-1"></i> 未完成
+                                </span>
+                                {% else %}
+                                <span class="status-badge status-completed">
+                                    <i class="fas fa-check-circle mr-1"></i> 已完成
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <a href="{% url 'delivery_order_detail' order.id %}" class="text-primary-600 hover:text-primary-800 mr-3">
+                                    <i class="fas fa-eye mr-1"></i> 查看
+                                </a>
+                                <button class="text-green-600 hover:text-green-800 mr-3 complete-btn" data-id="{{ order.id }}">
+                                    <i class="fas fa-check mr-1"></i> 标记完成
+                                </button>
+                                <button class="text-red-600 hover:text-red-800 delete-btn" data-id="{{ order.id }}">
+                                    <i class="fas fa-trash-alt mr-1"></i> 删除
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="px-6 py-10 text-center text-gray-500">
+                                <i class="fas fa-inbox text-4xl mb-4 block opacity-50"></i>
+                                <p>暂无发运单记录</p>
+                                <p class="text-sm mt-2">您可以在JSS调度系统首页导出PDF时生成发运单</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- 分页控件 -->
+            <div class="bg-gray-50 px-6 py-4 flex items-center justify-between border-t border-gray-200">
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm text-gray-700">
+                            显示 <span class="font-medium">1</span> 到 <span class="font-medium">{{ orders|length }}</span> 条，共 <span class="font-medium">{{ orders|length }}</span> 条记录
+                        </p>
+                    </div>
+                    <div>
+                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                            <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                            <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-primary-50 text-sm font-medium text-primary-600 hover:bg-primary-100">
+                                1
+                            </a>
+                            <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 确认删除对话框 -->
+    <div id="deleteModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl p-6 sm:p-8 max-w-md w-full mx-4">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">确认删除</h3>
+            <p class="text-gray-500 mb-6">确定要删除此发运单记录吗？此操作不可撤销，所有相关的明细数据也将被删除。</p>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelDelete" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                    取消
+                </button>
+                <button id="confirmDelete" class="px-4 py-2 border border-transparent rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none">
+                    确认删除
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 确认标记完成对话框 -->
+    <div id="completeModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl p-6 sm:p-8 max-w-md w-full mx-4">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">确认操作</h3>
+            <p class="text-gray-500 mb-6">确定要将此发运单标记为已完成状态吗？</p>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelComplete" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                    取消
+                </button>
+                <button id="confirmComplete" class="px-4 py-2 border border-transparent rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none">
+                    确认完成
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 等待DOM加载完成
+        document.addEventListener('DOMContentLoaded', function() {
+            // 为所有动画元素添加可见性
+            document.querySelectorAll('.fade-in').forEach(function(el, index) {
+                setTimeout(function() {
+                    el.style.opacity = '1';
+                }, 100 * index);
+            });
+            
+            // 删除按钮功能
+            let selectedOrderId = null;
+            const deleteModal = document.getElementById('deleteModal');
+            const completeModal = document.getElementById('completeModal');
+            
+            // 显示删除确认框
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    selectedOrderId = this.getAttribute('data-id');
+                    deleteModal.classList.remove('hidden');
+                });
+            });
+            
+            // 取消删除
+            document.getElementById('cancelDelete').addEventListener('click', function() {
+                deleteModal.classList.add('hidden');
+                selectedOrderId = null;
+            });
+            
+            // 确认删除
+            document.getElementById('confirmDelete').addEventListener('click', function() {
+                if (selectedOrderId) {
+                    // 执行删除操作
+                    window.location.href = `/delivery/delete/${selectedOrderId}/`;
+                }
+            });
+            
+            // 显示标记完成确认框
+            document.querySelectorAll('.complete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    selectedOrderId = this.getAttribute('data-id');
+                    completeModal.classList.remove('hidden');
+                });
+            });
+            
+            // 取消标记完成
+            document.getElementById('cancelComplete').addEventListener('click', function() {
+                completeModal.classList.add('hidden');
+                selectedOrderId = null;
+            });
+            
+            // 确认标记完成
+            document.getElementById('confirmComplete').addEventListener('click', function() {
+                if (selectedOrderId) {
+                    // 执行标记完成操作
+                    window.location.href = `/delivery/complete/${selectedOrderId}/`;
+                }
+            });
+            
+            // 刷新按钮功能
+            document.getElementById('refreshBtn').addEventListener('click', function() {
+                window.location.reload();
+            });
+            
+            // 筛选功能
+            const dateFilter = document.getElementById('date-filter');
+            const statusFilter = document.getElementById('status-filter');
+            const searchFilter = document.getElementById('search-filter');
+            
+            // 监听筛选条件变化
+            [dateFilter, statusFilter].forEach(filter => {
+                filter.addEventListener('change', applyFilters);
+            });
+            
+            // 搜索框输入延迟触发
+            let searchTimeout;
+            searchFilter.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(applyFilters, 300);
+            });
+            
+            function applyFilters() {
+                const rows = document.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    // 默认显示
+                    let shouldShow = true;
+                    
+                    // 应用状态筛选
+                    if (statusFilter.value !== 'all') {
+                        const statusCell = row.querySelector('td:nth-child(7)');
+                        if (statusCell) {
+                            const status = statusCell.textContent.trim().includes('未完成') ? 'pending' : 'completed';
+                            if (status !== statusFilter.value) {
+                                shouldShow = false;
+                            }
+                        }
+                    }
+                    
+                    // 应用搜索筛选
+                    if (searchFilter.value.trim() !== '') {
+                        const startIdCell = row.querySelector('td:nth-child(4)');
+                        if (startIdCell) {
+                            const startId = startIdCell.textContent.trim();
+                            if (!startId.includes(searchFilter.value.trim())) {
+                                shouldShow = false;
+                            }
+                        }
+                    }
+                    
+                    // 应用筛选结果
+                    row.style.display = shouldShow ? '' : 'none';
+                });
+            }
+        });
+    </script>
+</body>
+</html> 

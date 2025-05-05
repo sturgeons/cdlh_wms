@@ -4,11 +4,12 @@ from django.http import JsonResponse, HttpResponse
 import json
 import os
 from django.conf import settings
-from .models import partno
+from .models import partno, delivery_order, delivery_order_detail
 import tempfile
 import platform
 from io import BytesIO
 from datetime import datetime
+from django.urls import reverse
 
 # 导入ReportLab相关库
 from reportlab.pdfgen import canvas
@@ -645,3 +646,82 @@ def get_test_data_for_export(request):
                         record["partno_na_list"].append(part["teilnr"])
 
     return data
+
+
+# 发运单管理相关视图函数
+def delivery_order_management(request):
+    """发运单管理页面"""
+    # 获取所有发运单
+    all_orders = delivery_order.objects.all().order_by('-order_time')
+    
+    context = {
+        'orders': all_orders,
+    }
+    return render(request, 'jssp/delivery_management.html', context)
+
+def get_delivery_order_detail(request, order_id):
+    """发运单详情页面"""
+    # 获取特定发运单
+    try:
+        order = delivery_order.objects.get(id=order_id)
+        # 获取发运单明细
+        details = delivery_order_detail.objects.filter(order_id=order_id)
+        
+        # 统计左侧和右侧零件信息
+        left_partno_list = {}
+        right_partno_list = {}
+        err_partno_list = []
+        
+        for detail in details:
+            if detail.left_part_no and detail.left_part_no != '-':
+                if detail.left_part_no in left_partno_list:
+                    left_partno_list[detail.left_part_no].append(detail.id)
+                else:
+                    left_partno_list[detail.left_part_no] = [detail.id]
+            
+            if detail.right_part_no and detail.right_part_no != '-':
+                if detail.right_part_no in right_partno_list:
+                    right_partno_list[detail.right_part_no].append(detail.id)
+                else:
+                    right_partno_list[detail.right_part_no] = [detail.id]
+            
+            if (not detail.left_part_no or detail.left_part_no == '-') or \
+               (not detail.right_part_no or detail.right_part_no == '-'):
+                err_partno_list.append(detail.id)
+        
+        context = {
+            'order': order,
+            'details': details,
+            'left_parts': left_partno_list,
+            'right_parts': right_partno_list,
+            'err_parts': err_partno_list,
+            'parts_db': partno.objects.all(),
+        }
+        return render(request, 'jssp/delivery_detail.html', context)
+    except delivery_order.DoesNotExist:
+        # 如果发运单不存在，返回列表页并显示错误
+        return redirect('delivery_order_management')
+
+# 标记发运单状态为已完成
+def mark_delivery_complete(request, order_id):
+    """标记发运单为已完成"""
+    try:
+        order = delivery_order.objects.get(id=order_id)
+        order.order_status = '已完成'
+        order.save()
+        return redirect('delivery_order_management')
+    except delivery_order.DoesNotExist:
+        return redirect('delivery_order_management')
+
+# 删除发运单及其明细
+def delete_delivery_order(request, order_id):
+    """删除发运单及其明细"""
+    try:
+        order = delivery_order.objects.get(id=order_id)
+        # 删除相关明细
+        # delivery_order_detail.objects.filter(order_id=order_id).delete()
+        # 删除发运单
+        order.delete()
+        return redirect('delivery_order_management')
+    except delivery_order.DoesNotExist:
+        return redirect('delivery_order_management')

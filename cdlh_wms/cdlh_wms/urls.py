@@ -17,5 +17,11 @@ urlpatterns = [
     
     # PDF导出
     path('parts/export-pdf/', jssp.views.export_parts_pdf, name='export_parts_pdf'),
-    path('jss/export-table-pdf/', jssp.views_export_pdf.export_jss_table_pdf, name='export_jss_table_pdf'),
+    path('jss/export-table-pdf/', jssp.views_export_pdf.generate_delivery_order_pdf, name='export_jss_table_pdf'),
+    
+    # 发运单管理
+    path('delivery/', jssp.views.delivery_order_management, name='delivery_order_management'),
+    path('delivery/<int:order_id>/', jssp.views.get_delivery_order_detail, name='delivery_order_detail'),
+    path('delivery/complete/<int:order_id>/', jssp.views.mark_delivery_complete, name='mark_delivery_complete'),
+    path('delivery/delete/<int:order_id>/', jssp.views.delete_delivery_order, name='delete_delivery_order'),
 ]

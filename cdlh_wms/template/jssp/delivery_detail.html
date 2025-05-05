@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>发运单详情 #{{ order.id }} - CDLH WMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+        
+        * {
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%);
+        }
+        
+        .bg-gradient-page {
+            background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%);
+        }
+        
+        .card-shadow {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.6s ease-in-out;
+            opacity: 0;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .table-shadow {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+        
+        .table-hover tr:hover {
+            background-color: rgba(14, 165, 233, 0.05);
+        }
+        
+        .part-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-right: 0.5rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .badge-left {
+            background-color: rgba(14, 165, 233, 0.1);
+            color: #0369a1;
+        }
+        
+        .badge-right {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: #065f46;
+        }
+        
+        .badge-other {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: #92400e;
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .status-pending {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: #92400e;
+        }
+        
+        .status-completed {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: #065f46;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-page min-h-screen">
+    <!-- 顶部导航 -->
+    <nav class="bg-gradient-primary text-white shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i class="fas fa-truck-loading text-2xl mr-2"></i>
+                        <span class="font-bold text-xl tracking-tight">JSS调度系统</span>
+                    </div>
+                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                        <a href="/" class="px-3 py-2 text-sm font-medium flex items-center hover:text-primary-200 transition">
+                            <i class="fas fa-home mr-1.5"></i> 首页
+                        </a>
+                        <a href="{% url 'parts_management' %}" class="px-3 py-2 text-sm font-medium flex items-center hover:text-primary-200 transition">
+                            <i class="fas fa-cogs mr-1.5"></i> 零件管理
+                        </a>
+                        <a href="{% url 'delivery_order_management' %}" class="px-3 py-2 text-sm font-medium flex items-center border-b-2 border-white active-nav">
+                            <i class="fas fa-shipping-fast mr-1.5"></i> 发运单管理
+                        </a>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <a href="/admin" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-700 shadow-sm hover:bg-primary-800 transition">
+                            <i class="fas fa-user-shield mr-1.5"></i>
+                            管理员入口
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 移动端菜单 -->
+    <div class="sm:hidden bg-primary-800 text-white">
+        <div class="px-2 pt-2 pb-3 space-y-1 flex justify-around">
+            <a href="/" class="block px-3 py-2 rounded-md text-base font-medium text-center">
+                <i class="fas fa-home block mx-auto text-lg mb-1"></i>
+                <span>首页</span>
+            </a>
+            <a href="{% url 'parts_management' %}" class="block px-3 py-2 rounded-md text-base font-medium text-center">
+                <i class="fas fa-cogs block mx-auto text-lg mb-1"></i>
+                <span>零件管理</span>
+            </a>
+            <a href="{% url 'delivery_order_management' %}" class="block px-3 py-2 rounded-md text-base font-medium text-center bg-primary-700">
+                <i class="fas fa-shipping-fast block mx-auto text-lg mb-1"></i>
+                <span>发运单管理</span>
+            </a>
+            <a href="/admin" class="block px-3 py-2 rounded-md text-base font-medium text-center">
+                <i class="fas fa-user-shield block mx-auto text-lg mb-1"></i>
+                <span>管理</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- 页面内容 -->
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <!-- 页面标题和概述 -->
+        <div class="mb-8 fade-in" style="animation-delay: 0.1s; opacity: 1;">
+            <div class="flex items-center space-x-2 text-primary-600 mb-2">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>首页</span>
+                <i class="fas fa-angle-right text-xs"></i>
+                <span>发运单管理</span>
+                <i class="fas fa-angle-right text-xs"></i>
+                <span class="font-medium">详情 #{{ order.id }}</span>
+            </div>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2">发运单详情 #{{ order.id }}</h1>
+                    <p class="text-gray-600">查看发运单详细信息和相关零件</p>
+                </div>
+                <div class="mt-4 sm:mt-0 flex space-x-2">
+                    <a href="{% url 'delivery_order_management' %}" class="flex items-center justify-center py-2 px-4 bg-gray-600 text-white rounded-lg shadow hover:bg-gray-700 focus:outline-none transition">
+                        <i class="fas fa-arrow-left mr-2"></i> 返回列表
+                    </a>
+                    <!-- <button id="printBtn" class="flex items-center justify-center py-2 px-4 bg-primary-600 text-white rounded-lg shadow hover:bg-primary-700 focus:outline-none transition">
+                        <i class="fas fa-print mr-2"></i> 打印
+                    </button> -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- 发运单基本信息 -->
+        <div class="bg-white rounded-xl p-6 mb-8 card-shadow fade-in" style="animation-delay: 0.2s; opacity: 1;">
+            <div class="flex flex-col md:flex-row">
+                <div class="flex-1">
+                    <div class="flex items-start mb-4">
+                        <div class="w-1/3 text-gray-500 text-sm">发运单ID:</div>
+                        <div class="w-2/3 font-medium">{{ order.id }}</div>
+                    </div>
+                    <div class="flex items-start mb-4">
+                        <div class="w-1/3 text-gray-500 text-sm">创建时间:</div>
+                        <div class="w-2/3">{{ order.order_time|date:"Y-m-d H:i:s" }}</div>
+                    </div>
+                    <div class="flex items-start mb-4">
+                        <div class="w-1/3 text-gray-500 text-sm">起始业务:</div>
+                        <div class="w-2/3">{{ order.order_start_id }}</div>
+                    </div>
+                </div>
+                <div class="flex-1 md:ml-6 md:border-l md:pl-6 mt-4 md:mt-0">
+                    <div class="flex items-start mb-4">
+                        <div class="w-1/3 text-gray-500 text-sm">发运单类型:</div>
+                        <div class="w-2/3">{{ order.order_type }}</div>
+                    </div>
+                    <div class="flex items-start mb-4">
+                        <div class="w-1/3 text-gray-500 text-sm">记录数量:</div>
+                        <div class="w-2/3">{{ order.order_size }}</div>
+                    </div>
+                    <div class="flex items-start mb-4">
+                        <div class="w-1/3 text-gray-500 text-sm">状态:</div>
+                        <div class="w-2/3">
+                            {% if order.order_status == '未完成' %}
+                            <span class="status-badge status-pending">
+                                <i class="fas fa-clock mr-1"></i> 未完成
+                            </span>
+                            {% else %}
+                            <span class="status-badge status-completed">
+                                <i class="fas fa-check-circle mr-1"></i> 已完成
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 零件统计信息 -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- 左侧零件统计 -->
+            <div class="bg-white rounded-xl p-6 card-shadow fade-in" style="animation-delay: 0.3s; opacity: 1;">
+                <div class="flex items-center mb-4">
+                    <div class="bg-primary-100 p-3 rounded-full mr-4">
+                        <i class="fas fa-car text-primary-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800">左侧零件</h3>
+                        <p class="text-gray-500 text-sm">共 {{ left_parts|length }} 种零件</p>
+                    </div>
+                </div>
+                <div class="space-y-3 mt-4 max-h-48 overflow-y-auto">
+                    {% for part_no, ids in left_parts.items %}
+                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <div>
+                            <span class="text-sm font-medium">{{ part_no }}</span>
+                            {% for part in parts_db %}
+                                {% if part.partno == part_no %}
+                                <p class="text-xs text-gray-500">{{ part.partname }} ({{ part.partColor }})</p>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <div class="text-primary-600 text-sm font-medium">
+                            {{ ids|length }}个
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-gray-500 py-4">
+                        <p>无左侧零件</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- 右侧零件统计 -->
+            <div class="bg-white rounded-xl p-6 card-shadow fade-in" style="animation-delay: 0.4s; opacity: 1;">
+                <div class="flex items-center mb-4">
+                    <div class="bg-green-100 p-3 rounded-full mr-4">
+                        <i class="fas fa-car text-green-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800">右侧零件</h3>
+                        <p class="text-gray-500 text-sm">共 {{ right_parts|length }} 种零件</p>
+                    </div>
+                </div>
+                <div class="space-y-3 mt-4 max-h-48 overflow-y-auto">
+                    {% for part_no, ids in right_parts.items %}
+                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <div>
+                            <span class="text-sm font-medium">{{ part_no }}</span>
+                            {% for part in parts_db %}
+                                {% if part.partno == part_no %}
+                                <p class="text-xs text-gray-500">{{ part.partname }} ({{ part.partColor }})</p>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <div class="text-green-600 text-sm font-medium">
+                            {{ ids|length }}个
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-gray-500 py-4">
+                        <p>无右侧零件</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- 异常零件统计 -->
+            <div class="bg-white rounded-xl p-6 card-shadow fade-in" style="animation-delay: 0.5s; opacity: 1;">
+                <div class="flex items-center mb-4">
+                    <div class="bg-red-100 p-3 rounded-full mr-4">
+                        <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800">异常记录</h3>
+                        <p class="text-gray-500 text-sm">共 {{ err_parts|length }} 条异常记录</p>
+                    </div>
+                </div>
+                <div class="space-y-3 mt-4 max-h-48 overflow-y-auto">
+                    {% if err_parts %}
+                    <div class="p-3 bg-red-50 rounded-lg text-sm">
+                        <p class="text-red-600 font-medium mb-1">存在异常记录</p>
+                        <p class="text-gray-600">有 {{ err_parts|length }} 条记录缺少左侧或右侧零件信息</p>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-gray-500 py-4">
+                        <p>无异常记录</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- 搜索和过滤 -->
+        <div class="bg-white rounded-xl p-4 md:p-6 mb-8 card-shadow fade-in" style="animation-delay: 0.6s; opacity: 1;">
+            <div class="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-4">
+                <div class="flex-1">
+                    <label for="search-detail" class="block text-sm font-medium text-gray-700 mb-1">搜索明细</label>
+                    <div class="relative rounded-md shadow-sm">
+                        <input type="text" id="search-detail" placeholder="搜索业务号、序号、零件号..." 
+                            class="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500">
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                            <i class="fas fa-search text-gray-400"></i>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label for="filter-detail" class="block text-sm font-medium text-gray-700 mb-1">过滤显示</label>
+                    <select id="filter-detail" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500">
+                        <option value="all">全部记录</option>
+                        <option value="left">仅左侧零件</option>
+                        <option value="right">仅右侧零件</option>
+                        <option value="error">仅异常记录</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 明细数据表格 -->
+        <div class="bg-white rounded-xl overflow-hidden card-shadow fade-in" style="animation-delay: 0.7s; opacity: 1;">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 table-hover" id="details-table">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                序号
+                            </th>
+                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                业务号
+                            </th>
+                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                车架号
+                            </th>
+                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                KNR
+                            </th>
+                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                位置
+                            </th>
+                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                制造时间
+                            </th>
+                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                左侧零件
+                            </th>
+                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                右侧零件
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for detail in details %}
+                        <tr data-left="{{ detail.left_part_no|default:'-' }}" data-right="{{ detail.right_part_no|default:'-' }}">
+                            <td class="px-3 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">{{ forloop.counter }}</div>
+                            </td>
+                            <td class="px-3 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ detail.lfdnr }}</div>
+                            </td>
+                            <td class="px-3 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ detail.vin }}</div>
+                            </td>
+                            <td class="px-3 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ detail.knr }}</div>
+                            </td>
+                            <td class="px-3 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ detail.position }}</div>
+                            </td>
+                            <td class="px-3 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ detail.mzeit|date:"Y-m-d H:i:s" }}</div>
+                            </td>
+                            <td class="px-3 py-4 whitespace-nowrap">
+                                {% if detail.left_part_no and detail.left_part_no != '-' %}
+                                <div class="flex items-center">
+                                    <span class="part-badge badge-left">
+                                        {{ detail.left_part_no }}
+                                    </span>
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1">{{ detail.left_part_name }} ({{ detail.left_part_color }})</div>
+                                <div class="text-xs text-primary-600 mt-1">SN: {{ detail.left_part_sn }}</div>
+                                {% else %}
+                                <span class="text-red-500 text-sm">- 未配置 -</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-3 py-4 whitespace-nowrap">
+                                {% if detail.right_part_no and detail.right_part_no != '-' %}
+                                <div class="flex items-center">
+                                    <span class="part-badge badge-right">
+                                        {{ detail.right_part_no }}
+                                    </span>
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1">{{ detail.right_part_name }} ({{ detail.right_part_color }})</div>
+                                <div class="text-xs text-green-600 mt-1">SN: {{ detail.right_part_sn }}</div>
+                                {% else %}
+                                <span class="text-red-500 text-sm">- 未配置 -</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="px-6 py-10 text-center text-gray-500">
+                                <i class="fas fa-inbox text-4xl mb-4 block opacity-50"></i>
+                                <p>暂无明细记录</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- 分页控件 -->
+            <div class="bg-gray-50 px-6 py-4 flex items-center justify-between border-t border-gray-200">
+                <div class="flex-1 flex justify-between sm:hidden">
+                    <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        上一页
+                    </a>
+                    <a href="#" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        下一页
+                    </a>
+                </div>
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm text-gray-700">
+                            显示 <span class="font-medium">{{ details|length }}</span> 条记录
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 等待DOM加载完成
+        document.addEventListener('DOMContentLoaded', function() {
+            // 为所有动画元素添加可见性
+            document.querySelectorAll('.fade-in').forEach(function(el, index) {
+                setTimeout(function() {
+                    el.style.opacity = '1';
+                }, 100 * index);
+            });
+            
+            // 搜索功能
+            const searchInput = document.getElementById('search-detail');
+            const filterSelect = document.getElementById('filter-detail');
+            const rows = document.querySelectorAll('#details-table tbody tr');
+            
+            // 搜索函数
+            function applyFilters() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const filterType = filterSelect.value;
+                
+                rows.forEach(row => {
+                    let matchSearch = false;
+                    let matchFilter = true;
+                    
+                    // 搜索功能
+                    const textContent = row.textContent.toLowerCase();
+                    if (searchTerm === '' || textContent.includes(searchTerm)) {
+                        matchSearch = true;
+                    }
+                    
+                    // 过滤功能
+                    const leftPart = row.getAttribute('data-left');
+                    const rightPart = row.getAttribute('data-right');
+                    
+                    if (filterType === 'left' && (leftPart === '-' || !leftPart)) {
+                        matchFilter = false;
+                    } else if (filterType === 'right' && (rightPart === '-' || !rightPart)) {
+                        matchFilter = false;
+                    } else if (filterType === 'error' && !(leftPart === '-' || rightPart === '-' || !leftPart || !rightPart)) {
+                        matchFilter = false;
+                    }
+                    
+                    // 显示或隐藏行
+                    row.style.display = (matchSearch && matchFilter) ? '' : 'none';
+                });
+            }
+            
+            // 监听搜索和过滤变化
+            searchInput.addEventListener('input', applyFilters);
+            filterSelect.addEventListener('change', applyFilters);
+            
+            // 打印功能
+            document.getElementById('printBtn').addEventListener('click', function() {
+                window.print();
+            });
+        });
+    </script>
+</body>
+</html> 
