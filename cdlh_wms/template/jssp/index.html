@@ -3,54 +3,1018 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JSS调度系统</title>
+    <title>JSS调度系统 - CDLH WMS</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+        
+        * {
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%);
+        }
+        
+        .bg-gradient-page {
+            background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%);
+        }
+        
+        .card-shadow {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.6s ease-in-out;
+            opacity: 0;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .table-shadow {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+        
+        .table-hover tr:hover {
+            background-color: rgba(14, 165, 233, 0.05);
+        }
+        
+        .part-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-right: 0.5rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .part-badge-compact {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.125rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        
+        .badge-left {
+            background-color: rgba(14, 165, 233, 0.1);
+            color: #0369a1;
+        }
+        
+        .badge-right {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: #065f46;
+        }
+        
+        .badge-other {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: #92400e;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+    </style>
 </head>
 
-<body class="bg-gray-100">
-    <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold text-gray-800 mb-6 JSS调度系统</h1>
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <div class="overflow-x-auto">
-                <table class="min-w-full table-auto">
-                    <thead>
-                        <tr class="bg-gray-50">
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider 业务ID">业务ID</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider 序号">序号</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider 序号">knr</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider 业务ID">位置</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider 业务ID">mzeit</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider 业务ID">送货时间</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider 工厂">工厂</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider 工厂">产线</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider 生产订单">生产订单</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider 零件号">零件号</th>
+<body class="bg-gradient-page min-h-screen">
+    <!-- 顶部导航 -->
+    <nav class="bg-gradient-primary text-white shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i class="fas fa-truck-loading text-2xl mr-2"></i>
+                        <span class="font-bold text-xl tracking-tight">JSS调度系统</span>
+                    </div>
+                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                        <a href="/" class="px-3 py-2 text-sm font-medium flex items-center border-b-2 border-white active-nav">
+                            <i class="fas fa-home mr-1.5"></i> 首页
+                        </a>
+                        <a href="{% url 'parts_management' %}" class="px-3 py-2 text-sm font-medium flex items-center hover:text-primary-200 transition">
+                            <i class="fas fa-cogs mr-1.5"></i> 零件管理
+                        </a>
+                        <a href="#" class="px-3 py-2 text-sm font-medium flex items-center hover:text-primary-200 transition">
+                            <i class="fas fa-chart-line mr-1.5"></i> 数据统计
+                        </a>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <a href="/admin" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-700 shadow-sm hover:bg-primary-800 transition">
+                            <i class="fas fa-user-shield mr-1.5"></i>
+                            管理员入口
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 移动端菜单 -->
+    <div class="sm:hidden bg-primary-800 text-white">
+        <div class="px-2 pt-2 pb-3 space-y-1 flex justify-around">
+            <a href="/" class="block px-3 py-2 rounded-md text-base font-medium text-center bg-primary-700">
+                <i class="fas fa-home block mx-auto text-lg mb-1"></i>
+                <span>首页</span>
+            </a>
+            <a href="{% url 'parts_management' %}" class="block px-3 py-2 rounded-md text-base font-medium text-center">
+                <i class="fas fa-cogs block mx-auto text-lg mb-1"></i>
+                <span>零件管理</span>
+            </a>
+            <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-center">
+                <i class="fas fa-chart-line block mx-auto text-lg mb-1"></i>
+                <span>数据统计</span>
+            </a>
+            <a href="/admin" class="block px-3 py-2 rounded-md text-base font-medium text-center">
+                <i class="fas fa-user-shield block mx-auto text-lg mb-1"></i>
+                <span>管理</span>
+            </a>
+        </div>
+    </div>
+    
+    <!-- 页面内容 -->
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <!-- 页面标题和概述 -->
+        <div class="mb-8 fade-in" style="animation-delay: 0.1s; opacity: 1;">
+            <div class="flex items-center space-x-2 text-primary-600 mb-2">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>首页</span>
+                <i class="fas fa-angle-right text-xs"></i>
+                <span class="font-medium">JSS调度数据</span>
+            </div>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2">JSS调度系统</h1>
+                    <p class="text-gray-600">实时管理和监控生产调度数据</p>
+                </div>
+                <div class="mt-4 sm:mt-0 flex space-x-2">
+                    <button id="refreshBtn" class="flex items-center justify-center py-2 px-4 bg-primary-600 text-white rounded-lg shadow hover:bg-primary-700 focus:outline-none transition">
+                        <i class="fas fa-sync-alt mr-2"></i> 刷新数据
+                    </button>
+                    <div class="relative">
+                        <button id="exportPdfBtn" class="flex items-center justify-center py-2 px-4 bg-purple-600 text-white rounded-lg shadow hover:bg-purple-700 focus:outline-none transition">
+                            <i class="fas fa-file-pdf mr-2"></i> 导出零件PDF
+                        </button>
+                        <div id="exportPdfOptions" class="absolute hidden z-10 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 p-3 right-0 w-64">
+                            <form action="{% url 'export_parts_pdf' %}" method="GET">
+                                <div class="mb-2">
+                                    <label class="block text-sm text-gray-700 mb-1">零件类型</label>
+                                    <select name="part_type" class="w-full py-1 px-2 border border-gray-300 rounded text-sm">
+                                        <option value="">所有类型</option>
+                                        <option value="左侧">仅左侧</option>
+                                        <option value="右侧">仅右侧</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="block text-sm text-gray-700 mb-1">车型</label>
+                                    <select name="car_type" class="w-full py-1 px-2 border border-gray-300 rounded text-sm">
+                                        <option value="">所有车型</option>
+                                        <option value="VA7">VA7</option>
+                                        <option value="VS8">VS8</option>
+                                        <option value="VW381">VW381</option>
+                                        <option value="VS5">VS5</option>
+                                        <option value="VS7">VS7</option>
+                                        <option value="VW371">VW371</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="block text-sm text-gray-700 mb-1">搜索关键词</label>
+                                    <input type="text" name="search_keyword" class="w-full py-1 px-2 border border-gray-300 rounded text-sm" placeholder="可选，如零件号或名称">
+                                </div>
+                                <button type="submit" class="w-full flex items-center justify-center py-1.5 px-3 bg-purple-600 text-white rounded shadow hover:bg-purple-700 focus:outline-none transition text-sm">
+                                    <i class="fas fa-download mr-1.5"></i> 导出筛选结果
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="relative">
+                        <button id="exportTableBtn" class="flex items-center justify-center py-2 px-4 bg-emerald-600 text-white rounded-lg shadow hover:bg-emerald-700 focus:outline-none transition">
+                            <i class="fas fa-table mr-2"></i> 导出表格PDF
+                        </button>
+                        <div id="exportTableOptions" class="absolute hidden z-10 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 p-3 right-0 w-64">
+                            <form action="{% url 'export_jss_table_pdf' %}" method="GET">
+                                <input type="hidden" name="start_id" value="{{ filter_params.start_id }}">
+                                <input type="hidden" name="limit_count" value="{{ filter_params.limit_count }}">
+                                
+                                <div class="mb-3">
+                                    <label class="block text-sm text-gray-700 mb-1">显示类型</label>
+                                    <select name="filter_type" class="w-full py-1 px-2 border border-gray-300 rounded text-sm">
+                                        <option value="">全部记录</option>
+                                        <option value="left">仅左侧</option>
+                                        <option value="right">仅右侧</option>
+                                        <option value="both">左右都有</option>
+                                        <option value="neither">左右都无</option>
+                                    </select>
+                                </div>
+                                
+                                {% if request.path == '/test/' %}
+                                <input type="hidden" name="data_source" value="test">
+                                {% endif %}
+                                
+                                <button type="submit" class="w-full flex items-center justify-center py-1.5 px-3 bg-emerald-600 text-white rounded shadow hover:bg-emerald-700 focus:outline-none transition text-sm">
+                                    <i class="fas fa-download mr-1.5"></i> 导出当前表格数据
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    <button id="exportBtn" class="flex items-center justify-center py-2 px-4 bg-white border border-gray-300 text-gray-700 rounded-lg shadow hover:bg-gray-50 focus:outline-none transition">
+                        <i class="fas fa-file-export mr-2"></i> 导出CSV
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 筛选和搜索 -->
+        <div class="bg-white rounded-xl shadow p-4 mb-8 card-shadow fade-in" style="animation-delay: 0.3s; opacity: 1;">
+            <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+                <div class="flex items-center space-x-4">
+                    <div>
+                        <label for="filterType" class="block text-sm font-medium text-gray-700 mb-1">显示类型</label>
+                        <select id="filterType" class="rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                            <option value="all">全部记录</option>
+                            <option value="left">只有左侧</option>
+                            <option value="right">只有右侧</option>
+                            <option value="both">左右都有</option>
+                            <option value="neither">左右都无</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="w-full md:w-auto">
+                    <form action="" method="GET" class="flex items-end space-x-4">
+                        <div>
+                            <label for="start_id" class="block text-sm font-medium text-gray-700 mb-1">起始业务ID</label>
+                            <input type="number" id="start_id" name="start_id" value="{{ filter_params.start_id }}" placeholder="输入起始业务ID" class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500" min="1">
+                            <!-- <p class="text-xs text-gray-500 mt-1">从大于等于此ID的记录开始显示</p> -->
+                        </div>
+                        <div>
+                            <label for="limit_count" class="block text-sm font-medium text-gray-700 mb-1">显示记录数</label>
+                            <input type="number" id="limit_count" name="limit_count" value="{{ filter_params.limit_count }}" placeholder="显示多少条" min="1" class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                        </div>
+                        <div>
+                            <button type="submit" class="flex items-center justify-center h-10 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none">
+                                <i class="fas fa-filter mr-2"></i> 筛选数据
+                            </button>
+                        </div>
+                        {% if filter_params.start_id or filter_params.limit_count %}
+                        <div>
+                            <a href="{% if request.path == '/' %}{% url 'get_jss_data' %}{% else %}{% url 'get_test_data' %}{% endif %}" class="flex items-center justify-center h-10 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                                <i class="fas fa-undo mr-2"></i> 重置
+                            </a>
+                        </div>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+            
+            {% if filter_params.start_id or filter_params.limit_count %}
+            <div class="mt-4 bg-blue-50 border-l-4 border-blue-400 p-3 rounded">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-info-circle text-blue-500"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-blue-700">
+                            当前筛选条件：
+                            {% if filter_params.start_id %}起始业务ID: <strong>≥ {{ filter_params.start_id }}</strong>{% endif %}
+                            {% if filter_params.limit_count %}{% if filter_params.start_id %} | {% endif %}显示记录数: <strong>{{ filter_params.limit_count }}</strong>{% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if data.filter_error %}
+            <div class="mt-4 bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-yellow-500"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-yellow-700">
+                            {{ data.filter_error }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- 表格 -->
+        <div class="bg-white rounded-xl shadow p-6 card-shadow fade-in" style="animation-delay: 0.4s; opacity: 1;">
+            <div class="flex items-center mb-6 border-b pb-3">
+                <div class="p-2 bg-primary-100 rounded-lg mr-3">
+                    <i class="fas fa-table text-primary-600 text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-800">JSS调度数据列表</h2>
+                    <p class="text-sm text-gray-500 mt-1">显示全部调度记录和关联零件信息</p>
+                </div>
+            </div>
+            <div class="overflow-x-auto rounded-lg table-shadow">
+                <table class="min-w-full divide-y divide-gray-200 table-hover text-xs table-fixed" id="jssTable" style="width: max-content;">
+                    <thead class="bg-gradient-primary text-white">
+                        <tr>
+                            <th class="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">业务ID</th>
+                            <th class="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">序号</th>
+                            <th class="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">KNR</th>
+                            <th class="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">位置</th>
+                            <th class="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">MZEIT</th>
+                            <th class="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">送货时间</th>
+                            <th class="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">工厂</th>
+                            <th class="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">产线</th>
+                            <th class="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">生产订单</th>
+                            <th class="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">左侧零件</th>
+                            <th class="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">右侧零件</th>
+                            <th class="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">未知零件</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         {% for record in data.records %}
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ record.lfdnr }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ record.vin }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ record.knr }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ record.pointStatus }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ record.mzeit }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ record.supplierReceiveTime }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ record.werk }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ record.productLine }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ record.spj }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {% for part in record.partList %}
-                                <div>{{ part.teilnr }}</div>
-                                {% endfor %}
+                        <tr class="hover:bg-primary-50 transition-colors duration-150">
+                            <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900 font-medium">{{ record.lfdnr }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900">{{ record.vin }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900">{{ record.knr }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900">
+                                <span class="inline-flex items-center px-1 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                    {{ record.pointStatus }}
+                                </span>
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900">{{ record.mzeit }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900">{{ record.supplierReceiveTime }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900">{{ record.werk }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900">{{ record.productLine }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900">{{ record.spj }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900">
+                                {% if record.partno_left %}
+                                <span class="part-badge-compact badge-left">
+                                    <i class="fas fa-arrow-left mr-1"></i>{{ record.partno_left }}
+                                </span>
+                                {% else %}
+                                <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900">
+                                {% if record.partno_right %}
+                                <span class="part-badge-compact badge-right">
+                                    <i class="fas fa-arrow-right mr-1"></i>{{ record.partno_right }}
+                                </span>
+                                {% else %}
+                                <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap text-xs text-gray-900">
+                                {% if record.partno_na_list %}
+                                <button 
+                                  class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-md text-xs font-medium hover:bg-yellow-200 transition-colors focus:outline-none unknown-parts-btn"
+                                  data-business-id="{{ record.lfdnr }}"
+                                  data-parts="{{ record.partno_na_list|join:',' }}"
+                                >
+                                  <i class="fas fa-eye mr-1"></i> 查看 ({{ record.partno_na_list|length }})
+                                </button>
+                                {% else %}
+                                <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="12" class="px-2 py-4 text-center text-gray-500">
+                                <div class="flex flex-col items-center">
+                                    <i class="fas fa-database text-gray-400 text-5xl mb-4"></i>
+                                    <p class="text-lg">暂无数据</p>
+                                    <p class="text-sm mt-2 text-gray-400">当前没有调度数据可以显示</p>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
+            
+            <div class="mt-6">
+                <div class="text-sm text-gray-600">
+                    显示 {{ data.records|length }} 条记录
+                    {% if filter_params.start_id or filter_params.limit_count %}
+                    <span class="text-primary-600">(从 {{ data.total }} 条中筛选)</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- 页脚 -->
+        <footer class="mt-12 bg-white rounded-xl shadow-md p-6 text-center text-gray-600 card-shadow">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0 flex items-center">
+                    <i class="fas fa-truck-loading text-primary-600 text-xl mr-2"></i>
+                    <p class="text-sm">© 2024 JSS调度系统 | CDLH WMS</p>
+                </div>
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-400 hover:text-primary-600 transition">
+                        <i class="fab fa-github"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-primary-600 transition">
+                        <i class="fab fa-docker"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-primary-600 transition">
+                        <i class="fab fa-linkedin"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="mt-4 text-xs text-gray-400">
+                专为生产调度设计 | 版本 1.0.0
+            </div>
+        </footer>
+    </div>
+    
+    <!-- 添加模态窗口 -->
+    <div id="unknownPartsModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] overflow-hidden">
+            <div class="bg-gradient-primary text-white py-3 px-4 flex justify-between items-center">
+                <h3 class="text-lg font-semibold" id="modalTitle">未知零件详情</h3>
+                <button onclick="closeModal()" class="text-white hover:text-gray-200 focus:outline-none">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-5 overflow-y-auto max-h-[60vh]">
+                <div class="mb-3 flex items-center">
+                    <div class="p-2 bg-yellow-100 rounded-lg mr-3">
+                        <i class="fas fa-question-circle text-yellow-600 text-lg"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-700">业务ID: <span id="modalBusinessId" class="font-semibold"></span></p>
+                        <p class="text-sm text-gray-500">以下零件未被分类</p>
+                    </div>
+                </div>
+                
+                <!-- 快速分类设置 -->
+                <div class="mb-4 mt-4 border-t pt-4">
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">快速分类设置 <span class="text-red-500">*</span></h4>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label for="quickAddColor" class="block text-xs text-gray-600 mb-1">零件颜色 <span class="text-red-500">*</span></label>
+                            <select id="quickAddColor" class="w-full text-xs rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                                <option value="">-- 选择颜色 --</option>
+                                <option value="白色">白色</option>
+                                <option value="黑色">黑色</option>
+                                <option value="灰色">灰色</option>
+                                <option value="银色">银色</option>
+                                <option value="红色">红色</option>
+                                <option value="蓝色">蓝色</option>
+                                <option value="绿色">绿色</option>
+                                <option value="黄色">黄色</option>
+                                <option value="棕色">棕色</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="quickAddCarType" class="block text-xs text-gray-600 mb-1">适用车型 <span class="text-red-500">*</span></label>
+                            <select id="quickAddCarType" class="w-full text-xs rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                                <option value="">-- 选择车型 --</option>
+                                <option value="VA7">VA7</option>
+                                <option value="VS5">VS5</option>
+                                <option value="VS7">VS7</option>
+                                <option value="VW371">VW371</option>
+                                <option value="VW381">VW381</option>
+                          
+                            </select>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">
+                        <i class="fas fa-exclamation-circle text-red-500 mr-1"></i>
+                        必须选择颜色和车型才能快速添加零件
+                    </p>
+                </div>
+                
+                <div class="mt-4 border-t pt-4">
+                    <div id="partsList" class="grid grid-cols-1 gap-3">
+                        <!-- 零件列表将通过JavaScript动态添加 -->
+                    </div>
+                </div>
+                
+                <div id="quickAddSuccess" class="hidden mt-4 bg-green-50 border-l-4 border-green-400 p-3 rounded">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-green-700" id="successMessage"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="quickAddError" class="hidden mt-4 bg-red-50 border-l-4 border-red-400 p-3 rounded">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-circle text-red-500"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-red-700" id="errorMessage"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 py-3 px-4 border-t">
+                <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                    <a href="{% url 'parts_management' %}" class="w-full sm:w-auto flex-1 inline-flex justify-center items-center px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700 focus:outline-none transition-colors">
+                        <i class="fas fa-cogs mr-2"></i> 前往零件管理
+                    </a>
+                    <button onclick="closeModal()" class="w-full sm:w-auto flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 focus:outline-none transition-colors">
+                        关闭
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
+
+    <script>
+        // 页面加载动画
+        document.addEventListener('DOMContentLoaded', function() {
+            const elements = document.querySelectorAll('.fade-in');
+            elements.forEach(function(element, index) {
+                setTimeout(function() {
+                    element.style.opacity = '1';
+                }, index * 150);
+            });
+            
+            // 为所有未知零件按钮添加点击事件
+            document.querySelectorAll('.unknown-parts-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const businessId = this.getAttribute('data-business-id');
+                    const partsString = this.getAttribute('data-parts');
+                    const parts = partsString ? partsString.split(',') : [];
+                    showUnknownParts(businessId, parts);
+                });
+            });
+            
+            // 设置PDF导出下拉菜单
+            const exportPdfBtn = document.getElementById('exportPdfBtn');
+            const exportPdfOptions = document.getElementById('exportPdfOptions');
+            
+            if(exportPdfBtn && exportPdfOptions) {
+                exportPdfBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    exportPdfOptions.classList.toggle('hidden');
+                    // 隐藏其他菜单
+                    if(exportTableOptions) {
+                        exportTableOptions.classList.add('hidden');
+                    }
+                });
+            }
+            
+            // 设置表格导出下拉菜单
+            const exportTableBtn = document.getElementById('exportTableBtn');
+            const exportTableOptions = document.getElementById('exportTableOptions');
+            
+            if(exportTableBtn && exportTableOptions) {
+                exportTableBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    exportTableOptions.classList.toggle('hidden');
+                    // 隐藏其他菜单
+                    if(exportPdfOptions) {
+                        exportPdfOptions.classList.add('hidden');
+                    }
+                });
+            }
+            
+            // 点击页面其他部分关闭下拉菜单
+            document.addEventListener('click', function(e) {
+                if (exportPdfOptions && !exportPdfOptions.contains(e.target) && e.target !== exportPdfBtn) {
+                    exportPdfOptions.classList.add('hidden');
+                }
+                if (exportTableOptions && !exportTableOptions.contains(e.target) && e.target !== exportTableBtn) {
+                    exportTableOptions.classList.add('hidden');
+                }
+            });
+        });
+        
+        // 筛选功能
+        document.getElementById('filterType').addEventListener('change', function() {
+            applyFilters();
+        });
+        
+        function applyFilters() {
+            const filterType = document.getElementById('filterType').value;
+            const tableRows = document.querySelectorAll('#jssTable tbody tr');
+            
+            tableRows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length < 11) return; // 跳过无效行
+                
+                const hasLeft = cells[9].textContent.trim() !== '-';
+                const hasRight = cells[10].textContent.trim() !== '-';
+                
+                let shouldShow = true;
+                
+                // 应用类型筛选
+                if (filterType === 'left' && !hasLeft) {
+                    shouldShow = false;
+                } else if (filterType === 'right' && !hasRight) {
+                    shouldShow = false;
+                } else if (filterType === 'both' && (!hasLeft || !hasRight)) {
+                    shouldShow = false;
+                } else if (filterType === 'neither' && (hasLeft || hasRight)) {
+                    shouldShow = false;
+                }
+                
+                row.style.display = shouldShow ? '' : 'none';
+            });
+            
+            updateNoResultsMessage();
+        }
+        
+        function updateNoResultsMessage() {
+            const tableRows = document.querySelectorAll('#jssTable tbody tr');
+            let visibleRows = 0;
+            
+            tableRows.forEach(row => {
+                if (row.style.display !== 'none' && row.id !== 'noResultsRow') {
+                    visibleRows++;
+                }
+            });
+            
+            const tbody = document.querySelector('#jssTable tbody');
+            let noResultsRow = document.getElementById('noResultsRow');
+            
+            if (visibleRows === 0 && !noResultsRow) {
+                noResultsRow = document.createElement('tr');
+                noResultsRow.id = 'noResultsRow';
+                noResultsRow.innerHTML = `
+                <td colspan="12" class="px-2 py-4 text-center text-gray-500">
+                    <div class="flex flex-col items-center">
+                        <i class="fas fa-filter text-gray-400 text-4xl mb-3"></i>
+                        <p class="text-lg">无匹配数据</p>
+                        <p class="text-sm mt-2 text-gray-400">当前筛选条件下没有匹配的数据</p>
+                        <button onclick="clearFilters()" class="mt-4 py-2 px-4 bg-primary-600 text-white rounded-lg shadow hover:bg-primary-700 transition">
+                            <i class="fas fa-undo mr-2"></i>清除筛选
+                        </button>
+                    </div>
+                </td>`;
+                tbody.appendChild(noResultsRow);
+            } else if (visibleRows > 0 && noResultsRow) {
+                noResultsRow.remove();
+            }
+        }
+        
+        function clearFilters() {
+            document.getElementById('filterType').value = 'all';
+            applyFilters();
+        }
+        
+        // 刷新按钮功能
+        document.getElementById('refreshBtn').addEventListener('click', function() {
+            this.classList.add('animate-spin');
+            this.disabled = true;
+            
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
+        });
+        
+        // 导出功能
+        document.getElementById('exportBtn').addEventListener('click', function() {
+            exportTableToCSV('JSS调度数据.csv');
+        });
+        
+        function exportTableToCSV(filename) {
+            const table = document.getElementById('jssTable');
+            const rows = table.querySelectorAll('tr');
+            const csv = [];
+            
+            for (let i = 0; i < rows.length; i++) {
+                const row = [], cols = rows[i].querySelectorAll('td, th');
+                
+                for (let j = 0; j < cols.length; j++) {
+                    // 去除HTML标签，只保留文本内容
+                    let text = cols[j].textContent.trim().replace(/"/g, '""');
+                    row.push('"' + text + '"');
+                }
+                
+                csv.push(row.join(','));
+            }
+            
+            // 添加UTF-8 BOM头，解决Excel中文乱码问题
+            const BOM = '\uFEFF';
+            const csvContent = BOM + csv.join('\n');
+            
+            // 创建并下载CSV文件
+            const csvFile = new Blob([csvContent], {type: 'text/csv;charset=utf-8;'});
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(csvFile);
+            link.setAttribute('download', filename);
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+        }
+        
+        // 模态窗口功能
+        function showUnknownParts(id, parts) {
+            document.getElementById('modalBusinessId').textContent = id;
+            
+            // 清空并重新填充零件列表
+            const partsList = document.getElementById('partsList');
+            partsList.innerHTML = '';
+            
+            // 隐藏消息提示
+            document.getElementById('quickAddSuccess').classList.add('hidden');
+            document.getElementById('quickAddError').classList.add('hidden');
+            
+            if (parts.length === 0) {
+                partsList.innerHTML = '<div class="text-center text-gray-500 py-4">没有未知零件数据</div>';
+                return;
+            }
+            
+            parts.forEach(part => {
+                const partElement = document.createElement('div');
+                partElement.className = 'bg-yellow-50 border border-yellow-200 rounded-md p-3 flex items-center justify-between';
+                
+                // 零件信息部分
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'flex items-center';
+                infoDiv.innerHTML = `
+                    <div class="p-1.5 bg-yellow-100 rounded mr-3">
+                        <i class="fas fa-barcode text-yellow-600"></i>
+                    </div>
+                    <div>
+                        <p class="font-medium text-yellow-800">${part}</p>
+                        <p class="text-xs text-yellow-600 mt-1">未分类零件</p>
+                    </div>
+                `;
+                
+                // 操作按钮部分
+                const actionDiv = document.createElement('div');
+                actionDiv.className = 'flex space-x-1';
+                actionDiv.innerHTML = `
+                    <button 
+                        class="p-1.5 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                        onclick="quickAddPart('${part}', '左侧')"
+                        title="添加为左侧零件"
+                    >
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <button 
+                        class="p-1.5 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
+                        onclick="quickAddPart('${part}', '右侧')"
+                        title="添加为右侧零件"
+                    >
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                `;
+                
+                partElement.appendChild(infoDiv);
+                partElement.appendChild(actionDiv);
+                partsList.appendChild(partElement);
+            });
+            
+            // 显示模态窗口
+            document.getElementById('unknownPartsModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; // 阻止背景滚动
+        }
+        
+        function quickAddPart(partNo, partType) {
+            // 获取颜色和车型值
+            const partColor = document.getElementById('quickAddColor').value;
+            const carType = document.getElementById('quickAddCarType').value;
+            
+            // 验证颜色和车型是否已选择
+            if (!partColor || !carType) {
+                document.getElementById('errorMessage').textContent = "请选择颜色和车型后再添加零件";
+                document.getElementById('quickAddError').classList.remove('hidden');
+                document.getElementById('quickAddSuccess').classList.add('hidden');
+                
+                // 高亮未选择的下拉框
+                if (!partColor) {
+                    document.getElementById('quickAddColor').classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                    document.getElementById('quickAddColor').focus();
+                } else {
+                    document.getElementById('quickAddColor').classList.remove('border-red-500', 'ring-1', 'ring-red-500');
+                }
+                
+                if (!carType) {
+                    document.getElementById('quickAddCarType').classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                    if (partColor) document.getElementById('quickAddCarType').focus();
+                } else {
+                    document.getElementById('quickAddCarType').classList.remove('border-red-500', 'ring-1', 'ring-red-500');
+                }
+                
+                return;
+            }
+            
+            // 移除错误高亮
+            document.getElementById('quickAddColor').classList.remove('border-red-500', 'ring-1', 'ring-red-500');
+            document.getElementById('quickAddCarType').classList.remove('border-red-500', 'ring-1', 'ring-red-500');
+            
+            // 创建表单数据
+            const formData = new FormData();
+            formData.append('partno', partNo);
+            formData.append('parttype', partType);
+            formData.append('partColor', partColor);
+            formData.append('car_type', carType);
+            
+            // 添加中...状态显示
+            updatePartItemStatus(partNo, '处理中', null);
+            
+            // 发送AJAX请求
+            fetch('{% url "quick_add_part" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('successMessage').textContent = data.message;
+                    document.getElementById('quickAddSuccess').classList.remove('hidden');
+                    document.getElementById('quickAddError').classList.add('hidden');
+                    
+                    // 更新零件列表中该零件的状态
+                    updatePartItemStatus(partNo, partType, true, partColor, carType);
+                } else {
+                    document.getElementById('errorMessage').textContent = data.message;
+                    document.getElementById('quickAddError').classList.remove('hidden');
+                    document.getElementById('quickAddSuccess').classList.add('hidden');
+                    
+                    // 如果是已存在的错误，也更新UI状态
+                    if (data.part_id) {
+                        updatePartItemStatus(partNo, partType, false);
+                    } else {
+                        // 恢复至可操作状态
+                        updatePartItemStatus(partNo, '错误', false);
+                    }
+                }
+            })
+            .catch(error => {
+                document.getElementById('errorMessage').textContent = "处理请求时发生错误";
+                document.getElementById('quickAddError').classList.remove('hidden');
+                document.getElementById('quickAddSuccess').classList.add('hidden');
+                console.error('Error:', error);
+                
+                // 恢复至可操作状态
+                updatePartItemStatus(partNo, '错误', false);
+            });
+        }
+        
+        function updatePartItemStatus(partNo, partType, success, partColor, carType) {
+            // 获取所有包含该零件的元素
+            const partElements = document.querySelectorAll('#partsList > div');
+            
+            partElements.forEach(element => {
+                const partNoText = element.querySelector('p.font-medium').textContent;
+                if (partNoText === partNo) {
+                    const statusText = element.querySelector('p.text-xs');
+                    const buttons = element.querySelectorAll('button');
+                    
+                    // 处理中状态
+                    if (partType === '处理中') {
+                        statusText.innerHTML = `添加中... <i class="fas fa-spinner fa-spin text-blue-600"></i>`;
+                        statusText.classList.remove('text-yellow-600');
+                        statusText.classList.add('text-blue-600');
+                        
+                        // 禁用按钮
+                        buttons.forEach(btn => {
+                            btn.disabled = true;
+                            btn.classList.add('opacity-50');
+                        });
+                        
+                        return;
+                    }
+                    
+                    // 错误状态，恢复按钮
+                    if (partType === '错误') {
+                        statusText.innerHTML = `添加失败，请重试`;
+                        statusText.classList.remove('text-yellow-600', 'text-blue-600');
+                        statusText.classList.add('text-red-600');
+                        
+                        // 启用按钮
+                        buttons.forEach(btn => {
+                            btn.disabled = false;
+                            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                        });
+                        
+                        return;
+                    }
+                    
+                    // 更新UI
+                    if (success) {
+                        element.classList.remove('bg-yellow-50', 'border-yellow-200');
+                        element.classList.add('bg-green-50', 'border-green-200', 'opacity-60');
+                        
+                        let infoText = `已添加为<strong>${partType}</strong>零件 <i class="fas fa-check text-green-600"></i>`;
+                        // 添加颜色和车型信息（如果有）
+                        const detailsArray = [];
+                        if (partColor) detailsArray.push(`颜色: ${partColor}`);
+                        if (carType) detailsArray.push(`车型: ${carType}`);
+                        
+                        if (detailsArray.length > 0) {
+                            infoText += `<br><span class="text-gray-500">${detailsArray.join(' | ')}</span>`;
+                        }
+                        
+                        statusText.innerHTML = infoText;
+                        statusText.classList.remove('text-yellow-600');
+                        statusText.classList.add('text-green-600');
+                        
+                        // 禁用按钮
+                        buttons.forEach(btn => {
+                            btn.disabled = true;
+                            btn.classList.add('opacity-50', 'cursor-not-allowed');
+                        });
+                    } else {
+                        statusText.innerHTML = `已存在于数据库 <i class="fas fa-info-circle text-blue-600"></i>`;
+                        statusText.classList.remove('text-yellow-600');
+                        statusText.classList.add('text-blue-600');
+                        
+                        // 禁用按钮
+                        buttons.forEach(btn => {
+                            btn.disabled = true;
+                            btn.classList.add('opacity-50', 'cursor-not-allowed');
+                        });
+                    }
+                }
+            });
+        }
+        
+        // 获取CSRF Token的辅助函数
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        function closeModal() {
+            document.getElementById('unknownPartsModal').classList.add('hidden');
+            document.body.style.overflow = ''; // 恢复背景滚动
+        }
+        
+        // 点击模态窗口外部关闭
+        document.getElementById('unknownPartsModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+        
+        // ESC键关闭模态窗口
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && !document.getElementById('unknownPartsModal').classList.contains('hidden')) {
+                closeModal();
+            }
+        });
+    </script>
 </body>
 
 </html>

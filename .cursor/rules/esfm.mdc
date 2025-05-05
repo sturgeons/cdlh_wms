@@ -1,0 +1,6 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+Always respond in 中文，使用pug语法，:class对象不能多行，class方法中不能出现冒号和中括号
