@@ -7,7 +7,6 @@ env/
 venv/
 .env
 .venv
-db.sqlite3
 .idea/
 .vscode/
 .DS_Store
