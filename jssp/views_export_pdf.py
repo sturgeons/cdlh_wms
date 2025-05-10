@@ -117,10 +117,12 @@ def generate_delivery_order_pdf(request):
     font_name = register_chinese_font()
     
     # 表头数据 
-    headers = ['#','业务号', '序号', 'KNR', '位置', 'MZEIT', '时间', '工厂', '产线', '订单', '左侧', '右侧']
+    headers_left = ['#','序列号','零件类别', '序号', '生产订单', '位置', '制造时间', '时间', '工厂', '产线', '年份', '左侧']
+    headers_right = ['#','序列号', '零件类别', '序号', '生产订单', '位置', '制造时间', '时间', '工厂', '产线', '年份', '右侧']
     
     # 处理行数据
-    rows = []
+    rows_left = []
+    rows_right = []
     rows_index=0
     left_partno_list={}
     right_partno_list={}
@@ -143,8 +145,6 @@ def generate_delivery_order_pdf(request):
             record.get('werk', ''),
             record.get('productLine', ''),
             record.get('spj', ''),
-            l_partno,
-            r_partno
         ]
         if l_partno == '-' or r_partno=='-':
             err_partno_list.append([rows_index,record.get('partno_na_list',[])])
@@ -165,7 +165,13 @@ def generate_delivery_order_pdf(request):
                 right_partno_list[r_partno].append(rows_index)
             else:
                 right_partno_list[r_partno]=[rows_index]
-        rows.append(row)
+        p_l=row+[l_partno]  
+        p_l.insert(2,record.get('partname_left', '-'))
+        p_r=row+[r_partno]
+        p_r.insert(2,record.get('partname_right', '-'))
+
+        rows_left.append(p_l)
+        rows_right.append(p_r)
     
     # 在右上角绘制二维码
         # 创建二维码
@@ -176,7 +182,7 @@ def generate_delivery_order_pdf(request):
     
     # 设置表格参数
     margin_left = 30
-    margin_top = 40  
+    margin_top = 60  
     margin_right = 30
     margin_bottom = 35  # 稍微减小底部边距
     
@@ -184,32 +190,31 @@ def generate_delivery_order_pdf(request):
     available_height = height - margin_top - margin_bottom
     
     # 定义列宽比例
-    col_width_ratios = [0.03,0.05, 0.12, 0.06, 0.05, 0.15, 0.15, 0.03, 0.03, 0.05, 0.14, 0.12]
+    col_width_ratios = [0.03,0.05,0.14, 0.12, 0.06, 0.05, 0.15, 0.15, 0.03, 0.03, 0.05, 0.14]
     col_widths = [available_width * ratio for ratio in col_width_ratios]
     
     # 每页可显示的行数
-    row_height = 20  # 将默认行高从25降低到20
-    header_height = 25  # 将表头行高从30降低到25
+    row_height = 18  # 将默认行高从25降低到20
+    header_height = 20  # 将表头行高从30降低到25
     rows_per_page = int((available_height - header_height) / row_height)
     
     # 计算总页数（包括第一页标题页）
-    table_pages = (len(rows) + rows_per_page - 1) // rows_per_page if rows else 1
-    total_pages = 1 + table_pages  # 总页数 = 1个标题页 + 表格页数
-    
+    table_pages = (len(rows_left)+len(rows_right) + rows_per_page - 1) // rows_per_page if rows_left else 1
+    total_pages = 2 + table_pages  # 总页数 = 1个标题页 + 表格页数
+    if len(err_partno_list) > 0:
+        total_pages += 1
+
     # 初始化当前页为第1页
     current_page = 1
     
     
-  
     
-    
-    p.setFont(font_name, 12)
     if len(err_partno_list) > 0:
           # 绘制第一页 - 仅包含标题和二维码
         p.setFont(font_name, 20)  # 增大第一页标题字体
         p.drawCentredString(width/2, height-60, "当前零件号没有配置完全 请配置完再导出")
         filter_info_y = height - 100
-        
+        p.setFont(font_name, 12)
         filter_info_y -= 20
         p.drawString(50, filter_info_y, f"没有排序信息位置")
         filter_info_y -= 20
@@ -221,7 +226,6 @@ def generate_delivery_order_pdf(request):
         current_page += 1
         filter_info_y = height - 60
         
-    
     
     
     p.setFont(font_name, 16)  # 增大第一页标题字体
@@ -307,13 +311,13 @@ def generate_delivery_order_pdf(request):
     # 增加当前页码
     current_page += 1
     
-    # 从第二页开始绘制表格
+    # 从第三页开始绘制表格-左侧数据
     row_index = 0
     
     # 绘制所有数据页面
-    while row_index < len(rows):
+    while row_index < len(rows_left):
         # 当前页可绘制的行数
-        current_page_rows = min(rows_per_page, len(rows) - row_index)
+        current_page_rows = min(rows_per_page, len(rows_left) - row_index)
         
         # 绘制表格标题
         p.setFont(font_name, 14)
@@ -338,13 +342,13 @@ def generate_delivery_order_pdf(request):
         # 绘制表头文字和垂直网格线
         p.setFont(font_name, 10)  # 降低表头字体大小
         x = margin_left
-        for i, header in enumerate(headers):
+        for i, header in enumerate(headers_left):
             # 绘制表头文字
             p.drawCentredString(x + col_widths[i]/2, y - header_height/2 - 3, header)  # 稍微上移表头文本
             x += col_widths[i]
             
             # 绘制垂直网格线(除了最后一列)
-            if i < len(headers) - 1:
+            if i < len(headers_left) - 1:
                 p.line(x, y, x, y - table_height)
         
         # 绘制表头底部水平线(加粗)
@@ -355,7 +359,7 @@ def generate_delivery_order_pdf(request):
         # 绘制表格数据和水平网格线
         y = height - margin_top - header_height
         for i in range(current_page_rows):
-            current_row = rows[row_index + i]
+            current_row = rows_left[row_index + i]
             
             # 绘制水平网格线(除了最后一行)
             if i < current_page_rows - 1:
@@ -389,6 +393,88 @@ def generate_delivery_order_pdf(request):
         current_page += 1
         row_index += current_page_rows
     
+    # 从第三页开始绘制表格-右侧数据
+    row_index = 0
+    
+    # 绘制所有数据页面
+    while row_index < len(rows_right):
+        # 当前页可绘制的行数
+        current_page_rows = min(rows_per_page, len(rows_right) - row_index)
+        
+        # 绘制表格标题
+        p.setFont(font_name, 14)
+        p.drawCentredString(width/2, height - 30, "JSS调度系统数据表")
+        
+        # 绘制表头
+        y = height - margin_top
+        x = margin_left
+        
+        # 设置边框线宽
+        p.setLineWidth(0.5)
+        
+        # 先绘制整个表格的外边框
+        table_height = header_height + (current_page_rows * row_height)
+        p.rect(margin_left, y - table_height, available_width, table_height)
+        
+        # 设置表头背景
+        p.setFillColor(colors.lightblue)
+        p.rect(x, y - header_height, available_width, header_height, fill=True, stroke=False)
+        p.setFillColor(colors.black)
+        
+        # 绘制表头文字和垂直网格线
+        p.setFont(font_name, 10)  # 降低表头字体大小
+        x = margin_left
+        for i, header in enumerate(headers_right):
+            # 绘制表头文字
+            p.drawCentredString(x + col_widths[i]/2, y - header_height/2 - 3, header)  # 稍微上移表头文本
+            x += col_widths[i]
+            
+            # 绘制垂直网格线(除了最后一列)
+            if i < len(headers_right) - 1:
+                p.line(x, y, x, y - table_height)
+        
+        # 绘制表头底部水平线(加粗)
+        p.setLineWidth(1)
+        p.line(margin_left, y - header_height, margin_left + available_width, y - header_height)
+        p.setLineWidth(0.5)
+        
+        # 绘制表格数据和水平网格线
+        y = height - margin_top - header_height
+        for i in range(current_page_rows):
+            current_row = rows_right[row_index + i]
+            
+            # 绘制水平网格线(除了最后一行)
+            if i < current_page_rows - 1:
+                p.line(margin_left, y - row_height, margin_left + available_width, y - row_height)
+            
+            # 绘制单元格内容
+            x = margin_left
+            for j, cell in enumerate(current_row):
+                p.setFont(font_name, 10)  # 降低单元格字体大小
+
+                col_width = col_widths[j]
+                
+                # 绘制文本（左对齐，垂直居中）
+                text_y = y - row_height/2-3  # 移除额外的-3偏移，使文本在缩小的行中居中
+                if j in [0, 3, 4]:  # 对特定列居中显示
+                    p.drawCentredString(x + col_width/2, text_y, cell)
+                else:
+                    p.drawString(x + 5, text_y, cell)  # 保持5点的左边距
+                
+                x += col_widths[j]
+            
+            y -= row_height
+        
+        # 添加页码
+        p.setFont(font_name, 10)
+        p.drawCentredString(width/2, 30, f"第 {current_page} 页 / 共 {total_pages} 页")
+        p.drawString(50, 30, "CDLH WMS零件管理系统")
+        
+        # 下一页
+        p.showPage()
+        current_page += 1
+        row_index += current_page_rows
+        
     # 完成PDF
     p.save()
     
