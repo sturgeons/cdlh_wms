@@ -201,7 +201,7 @@ def generate_delivery_order_pdf(request):
     
     # 绘制第一页 - 仅包含标题和二维码
     p.setFont(font_name, 16)  # 增大第一页标题字体
-    p.drawCentredString(width/2, height-30, "JSS调度系统数据表")
+    p.drawCentredString(width/2, height-30, "JSS调度系统数据表   No:"+str(order_id.id))
     
     # 添加生成日期和筛选信息
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")

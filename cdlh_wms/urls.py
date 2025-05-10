@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 import jssp.views
 import jssp.views_export_pdf
+import jssp.views_api
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -24,4 +25,8 @@ urlpatterns = [
     path('delivery/<int:order_id>/', jssp.views.get_delivery_order_detail, name='delivery_order_detail'),
     path('delivery/complete/<int:order_id>/', jssp.views.mark_delivery_complete, name='mark_delivery_complete'),
     path('delivery/delete/<int:order_id>/', jssp.views.delete_delivery_order, name='delete_delivery_order'),
+    
+    # API接口
+    path('api/parts/', jssp.views_api.get_part_list, name='get_part_list'),
+    path('api/delivery_orders/', jssp.views_api.get_delivery_order_list, name='get_delivery_order_list'),
 ]
