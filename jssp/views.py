@@ -8,7 +8,7 @@ from .models import partno, delivery_order, delivery_order_detail
 import tempfile
 import platform
 from io import BytesIO
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.urls import reverse
 
 # 导入PDF相关库
@@ -709,3 +709,23 @@ def delete_delivery_order(request, order_id):
         return redirect('delivery_order_management')
     except delivery_order.DoesNotExist:
         return redirect('delivery_order_management')
+
+# 查询今天8：00到现在所有发运单的数量 如果时间是凌晨，则查询昨天8：00到现在所有发运单的数量
+def get_delivery_orders_today(request):
+    """查询今天8:00到现在所有发运单"""
+    try:
+        # 获取当前时间
+        current_time = datetime.now()
+        
+        # 如果当前时间在凌晨，则查询昨天8：00到现在所有发运单的数量
+        if current_time.hour < 8:
+            start_time = (current_time - timedelta(days=1)).replace(hour=8, minute=0, second=0, microsecond=0)
+        else:
+            start_time = current_time.replace(hour=8, minute=0, second=0, microsecond=0)
+        
+        # 查询今天8:00到现在所有发运单
+        orders = delivery_order.objects.filter(order_time__range=(start_time, current_time))
+        return len(orders)
+    except Exception as e:
+        return 0
+
