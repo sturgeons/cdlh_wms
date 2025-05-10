@@ -145,6 +145,41 @@ def get_jss_data(request):
     # 获取筛选参数
     start_id = request.GET.get("start_id", "")
     limit_count = request.GET.get("limit_count", "")
+    partno_all = partno.objects.all()
+
+    # 遍历每条记录
+    for record in data["records"]:
+        record["partno_na_list"] = []
+        # 初始化该记录的零件列表
+        if "partList" in record:
+            # 遍历零件列表
+            for part in record["partList"]:
+                if "teilnr" in part:
+                    # 查询零件号对应的完整信息
+                    part_info = partno_all.filter(partno=part["teilnr"]).first()
+                    if part_info:
+                        # 使用点表示法访问对象属性，而不是字典访问方式
+                        if part_info.parttype == "左侧":
+                            # 将查询到的零件信息添加到record对象中
+                            record["partname_left"] = part_info.partname
+                            record["parttype_left"] = part_info.parttype
+                            record["partColor_left"] = part_info.partColor
+                            record["partCode_left"] = part_info.partCode
+                            record["car_type_left"] = part_info.car_type
+                            record["partno_ascii_left"] = part_info.partno_ascii
+                            record["partno_left"] = part_info.partno
+
+                        elif part_info.parttype == "右侧":
+                            # 将查询到的零件信息添加到record对象中
+                            record["partname_right"] = part_info.partname
+                            record["parttype_right"] = part_info.parttype
+                            record["partColor_right"] = part_info.partColor
+                            record["partCode_right"] = part_info.partCode
+                            record["car_type_right"] = part_info.car_type
+                            record["partno_ascii_right"] = part_info.partno_ascii
+                            record["partno_right"] = part_info.partno
+                    else:
+                        record["partno_na_list"].append(part["teilnr"])
 
     # 倒序
     data["records"].reverse()
