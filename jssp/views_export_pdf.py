@@ -199,7 +199,30 @@ def generate_delivery_order_pdf(request):
     # 初始化当前页为第1页
     current_page = 1
     
+    
     # 绘制第一页 - 仅包含标题和二维码
+    p.setFont(font_name, 20)  # 增大第一页标题字体
+    p.drawCentredString(width/2, height-60, "当前零件号没有配置完全 请配置完再导出")
+    
+    
+    p.setFont(font_name, 12)
+    if len(err_partno_list) > 0:
+        filter_info_y = height - 100
+        
+        filter_info_y -= 20
+        p.drawString(50, filter_info_y, f"没有排序信息位置")
+        filter_info_y -= 20
+        for e_p in err_partno_list:
+            p.drawString(50, filter_info_y, f"{e_p[0]}：{e_p[1]}")
+            filter_info_y -= 20
+        # 结束返回报告
+        p.showPage()
+        current_page += 1
+        filter_info_y = height - 60
+        
+    
+    
+    
     p.setFont(font_name, 16)  # 增大第一页标题字体
     p.drawCentredString(width/2, height-30, "JSS调度系统数据表   No:"+str(order_id.id))
     
@@ -227,10 +250,34 @@ def generate_delivery_order_pdf(request):
             filter_info_y -= 20
     
     
+    
+    # 添加页码
+    p.setFont(font_name, 10)
+    p.drawCentredString(width/2, 30, f"第 {current_page} 页 / 共 {total_pages} 页")
+    p.drawString(50, 30, "CDLH WMS零件管理系统")
+    
+    # 结束第一页
+    p.showPage()
+    
+    # 增加当前页码
+    current_page += 1
+    filter_info_y = height - 60
+    
+    # 绘制第一页 - 仅包含标题和二维码
+    p.setFont(font_name, 16)  # 增大第一页标题字体
+    p.drawCentredString(width/2, height-30, "JSS调度系统数据表   No:"+str(order_id.id))
+    
+    # 添加生成日期和筛选信息
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    p.setFont(font_name, 12)
+    filter_info_y = height - 60
+    p.drawString(50, filter_info_y, f"起始业务: {start_id} 显示数量: {limit_count} 生成日期: {now} 总记录数: {len(filtered_records)}")
+    
+    filter_info_y -= 20
     p.setLineWidth(0.5)
     p.line(50, filter_info_y+10, available_width, filter_info_y+10)
+    filter_info_y -= 10
     
-    filter_info_y -= 10  
     p.drawString(50, filter_info_y, f"右侧产品排序信息：")
     filter_info_y -= 20
     p.drawImage(right_qr_file, width-qr_size-60, filter_info_y-qr_size/2-2, width=qr_size, height=qr_size)
@@ -244,16 +291,7 @@ def generate_delivery_order_pdf(request):
         for i in range(0, len(str_list), 24):
             p.drawString(50, filter_info_y, f"{'、'.join(str_list[i:i+24])}")
             filter_info_y -= 20
-    # 增加分割线
-    p.setLineWidth(0.5)
-    p.line(50, filter_info_y+10,  available_width, filter_info_y+10)
-    filter_info_y -= 10
-    p.drawString(50, filter_info_y, f"没有排序信息位置")
-    filter_info_y -= 20
-    for e_p in err_partno_list:
-        p.drawString(50, filter_info_y, f"{e_p[0]}：{e_p[1]}")
-        filter_info_y -= 20
-    
+
 
     
     

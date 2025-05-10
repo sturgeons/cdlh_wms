@@ -29,7 +29,7 @@ def get_part_list(request):
 
 def get_delivery_order_list(request):
     """获取发运单列表"""
-    delivery_orders = delivery_order.objects.all()
+    delivery_orders = delivery_order.objects.filter(order_status='未完成')
     serializer = delivery_orderSerial(delivery_orders, many=True)
     return JsonResponse(serializer.data, safe=False)
 
