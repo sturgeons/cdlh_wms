@@ -53,21 +53,19 @@ def generate_delivery_order_pdf(request):
 
     db_partno_list = partno.objects.all()
     # 获取与首页相同的数据
-    records_all = []
     if request.GET.get("data_source", "") == "test":
         # 使用测试数据
         data = views_module.get_test_data_for_export(request)
     else:
         # 使用实际数据
-        data = views_module.get_all_data(records_all, 1)
+        data = views_module.get_api_data(request)
 
     # 倒序
     data["records"].reverse()
-    # 应用筛选逻辑 数组重复两次
+
 
     filtered_records = data["records"]
-    # 应用筛选逻辑
-    filtered_records = data["records"]
+    
     # 应用筛选和限制
     filtered_records = views_module.filter_records_by_start_id(
         filtered_records, start_id, data

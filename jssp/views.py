@@ -65,7 +65,46 @@ def get_all_data(records_all, current_page):
     except Exception as e:
         print(f"Error fetching data: {str(e)}")
         return {"records": records_all, "total": 0, "current": current_page, "pages": 1}
+def get_api_data(request):
+    records_all = []
+    data = get_all_data(records_all, 1)
+    partno_all = partno.objects.all()
 
+    # 遍历每条记录
+    for record in data["records"]:
+        record["partno_na_list"] = []
+        # 初始化该记录的零件列表
+        if "partList" in record:
+            # 遍历零件列表
+            for part in record["partList"]:
+                if "teilnr" in part:
+                    # 查询零件号对应的完整信息
+                    part_info = partno_all.filter(partno=part["teilnr"]).first()
+                    if part_info:
+                        # 使用点表示法访问对象属性，而不是字典访问方式
+                        if part_info.parttype == "左侧":
+                            # 将查询到的零件信息添加到record对象中
+                            record["partname_left"] = part_info.partname
+                            record["parttype_left"] = part_info.parttype
+                            record["partColor_left"] = part_info.partColor
+                            record["partCode_left"] = part_info.partCode
+                            record["car_type_left"] = part_info.car_type
+                            record["partno_ascii_left"] = part_info.partno_ascii
+                            record["partno_left"] = part_info.partno
+
+                        elif part_info.parttype == "右侧":
+                            # 将查询到的零件信息添加到record对象中
+                            record["partname_right"] = part_info.partname
+                            record["parttype_right"] = part_info.parttype
+                            record["partColor_right"] = part_info.partColor
+                            record["partCode_right"] = part_info.partCode
+                            record["car_type_right"] = part_info.car_type
+                            record["partno_ascii_right"] = part_info.partno_ascii
+                            record["partno_right"] = part_info.partno
+                    else:
+                        record["partno_na_list"].append(part["teilnr"])
+
+    return data
 
 def filter_records_by_start_id(filtered_records, start_id, data):
     """根据起始ID筛选记录
@@ -192,9 +231,25 @@ def get_jss_data(request):
     filtered_records = limit_records_count(
         filtered_records, limit_count, data["records"]
     )
-    # 更新数据集
+    # # 更新数据集
+    # data["records"] = filtered_records
+    # data["filtered_count"] = len(filtered_records)
+
+    # return render(
+    #     request,
+    #     "jssp/index.html",
+    #     {
+    #         "data": data,
+    #         "filter_params": {"start_id": start_id, "limit_count": limit_count},
+    #     },
+    # )
+    
+     # 更新数据集
     data["records"] = filtered_records
     data["filtered_count"] = len(filtered_records)
+    data["total"] = len(filtered_records)
+    data["current"] = 1
+    data["pages"] = 1
 
     return render(
         request,
