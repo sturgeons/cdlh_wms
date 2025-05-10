@@ -128,28 +128,21 @@ def generate_delivery_order_pdf(request):
         "#",
         "序列号",
         "零件类别",
+        "颜色",
         "序号",
         "生产订单",
-        "位置",
-        "制造时间",
-        "时间",
-        "工厂",
-        "产线",
-        "年份",
+        "送货时间",
+        
         "左侧",
     ]
     headers_right = [
         "#",
         "序列号",
         "零件类别",
+        "颜色",
         "序号",
         "生产订单",
-        "位置",
-        "制造时间",
-        "时间",
-        "工厂",
-        "产线",
-        "年份",
+        "送货时间",
         "右侧",
     ]
 
@@ -172,12 +165,12 @@ def generate_delivery_order_pdf(request):
             str(record.get("lfdnr", "")),
             record.get("vin", ""),
             record.get("knr", ""),
-            str(record.get("pointStatus", "")),
-            str(record.get("mzeit", "")),
+            # str(record.get("pointStatus", "")),
+            # str(record.get("mzeit", "")),
             str(record.get("supplierReceiveTime", "")),
-            record.get("werk", ""),
-            record.get("productLine", ""),
-            record.get("spj", ""),
+            # record.get("werk", ""),
+            # record.get("productLine", ""),
+            # record.get("spj", ""),
         ]
         if l_partno == "-" or r_partno == "-":
             err_partno_list.append([rows_index, record.get("partno_na_list", [])])
@@ -202,8 +195,10 @@ def generate_delivery_order_pdf(request):
                 right_partno_list[r_partno] = [rows_index]
         p_l = row + [l_partno]
         p_l.insert(2, record.get("partname_left", "-"))
+        p_l.insert(3, record.get("partColor_left", "-"))
         p_r = row + [r_partno]
         p_r.insert(2, record.get("partname_right", "-"))
+        p_r.insert(3, record.get("partColor_right", "-"))
 
         rows_left.append(p_l)
         rows_right.append(p_r)
@@ -216,7 +211,7 @@ def generate_delivery_order_pdf(request):
 
     # 设置表格参数
     margin_left = 30
-    margin_top = 40
+    margin_top = 60
     margin_right = 30
     margin_bottom = 40  
 
@@ -225,18 +220,14 @@ def generate_delivery_order_pdf(request):
 
     # 定义列宽比例
     col_width_ratios = [
-        0.03,
-        0.05,
-        0.14,
-        0.12,
-        0.06,
-        0.05,
+        0.1,
+        0.1,
+        0.15,
+        0.1,
+        0.15,
+        0.1,
         0.15,
         0.15,
-        0.03,
-        0.03,
-        0.05,
-        0.14,
     ]
     col_widths = [available_width * ratio for ratio in col_width_ratios]
 
@@ -405,14 +396,16 @@ def generate_delivery_order_pdf(request):
         p.setFont(font_name, 16)
         p.drawCentredString(width / 2, height - 30, "JSS调度系统数据表")
 
-        # 绘制订单号
-        p.drawCentredString(50, height - 30, f"左：{today_order_count}")
+       
 
         p.drawCentredString(
             width - 148,
             height - 30,
             f"第______车   第______架",
         )
+         # 绘制订单号
+        p.setFont(font_name, 55)
+        p.drawString(50, height - 50, f"左：{today_order_count}")
 
         # 绘制表头
         y = height - margin_top
@@ -486,10 +479,9 @@ def generate_delivery_order_pdf(request):
                 text_y = (
                     y - row_height / 2 - 3
                 )  # 移除额外的-3偏移，使文本在缩小的行中居中
-                if j in [0, 3, 4]:  # 对特定列居中显示
-                    p.drawCentredString(x + col_width / 2, text_y, cell)
-                else:
-                    p.drawString(x + 5, text_y, cell)  # 保持5点的左边距
+                
+                p.drawCentredString(x + col_width / 2, text_y, cell)
+          
 
                 x += col_widths[j]
 
@@ -519,16 +511,18 @@ def generate_delivery_order_pdf(request):
         # 绘制表格标题
         p.setFont(font_name, 16)
         p.drawCentredString(width / 2, height - 30, "JSS调度系统数据表")
-
-        # 绘制订单号
-        p.drawCentredString(50, height - 30, f"右：{today_order_count}")
-
-        # 打印时间
+        
+         # 打印时间
         p.drawCentredString(
             width - 148,
             height - 30,
-            f"第______车   第______架",
-        )
+            f"第______车   第______架",)
+
+        # 绘制订单号
+        p.setFont(font_name, 55)
+        p.drawString(50, height - 50, f"右：{today_order_count}")
+
+       
         
         # 绘制表头
         y = height - margin_top
@@ -602,10 +596,9 @@ def generate_delivery_order_pdf(request):
                 text_y = (
                     y - row_height / 2 - 3
                 )  # 移除额外的-3偏移，使文本在缩小的行中居中
-                if j in [0, 3, 4]:  # 对特定列居中显示
-                    p.drawCentredString(x + col_width / 2, text_y, cell)
-                else:
-                    p.drawString(x + 5, text_y, cell)  # 保持5点的左边距
+         
+                p.drawCentredString(x + col_width / 2, text_y, cell)
+                
 
                 x += col_widths[j]
 

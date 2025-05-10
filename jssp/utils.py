@@ -12,13 +12,12 @@ def register_chinese_font():
     if system == 'Windows':
         # Windows系统的字体路径
         font_paths = [
-            os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'simsun.ttc'),
             os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'simhei.ttf'),
-            os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'msyh.ttc')
         ]
     else:
         # Linux/Ubuntu系统的中文字体路径
         font_paths = [
+            '/usr/share/fonts/truetype/arphic/simhei.ttf',  # 文泉驿Unicode明体
             '/usr/share/fonts/truetype/arphic/uming.ttc',  # 文泉驿Unicode明体
             '/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc',  # 文泉驿正黑
             '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',  # Noto Sans CJK
