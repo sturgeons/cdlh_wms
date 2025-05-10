@@ -200,13 +200,14 @@ def generate_delivery_order_pdf(request):
     current_page = 1
     
     
-    # 绘制第一页 - 仅包含标题和二维码
-    p.setFont(font_name, 20)  # 增大第一页标题字体
-    p.drawCentredString(width/2, height-60, "当前零件号没有配置完全 请配置完再导出")
+  
     
     
     p.setFont(font_name, 12)
     if len(err_partno_list) > 0:
+          # 绘制第一页 - 仅包含标题和二维码
+        p.setFont(font_name, 20)  # 增大第一页标题字体
+        p.drawCentredString(width/2, height-60, "当前零件号没有配置完全 请配置完再导出")
         filter_info_y = height - 100
         
         filter_info_y -= 20
