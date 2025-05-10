@@ -29,4 +29,5 @@ urlpatterns = [
     # API接口
     path('api/parts/', jssp.views_api.get_part_list, name='get_part_list'),
     path('api/delivery_orders/', jssp.views_api.get_delivery_order_list, name='get_delivery_order_list'),
+    path('api/delivery_order_detail/<int:order_id>/', jssp.views_api.get_delivery_order_detail, name='get_delivery_order_detail'),
 ]

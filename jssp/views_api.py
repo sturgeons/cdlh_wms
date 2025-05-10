@@ -35,10 +35,10 @@ def get_delivery_order_list(request):
 
 def get_delivery_order_detail(request, order_id):
     """获取发运单详情"""
-    delivery_order = delivery_order.objects.get(id=order_id)
+    _delivery_order = delivery_order.objects.get(id=order_id)
     # 获取发运单详情
-    delivery_order_detail = delivery_order_detail.objects.filter(delivery_order=delivery_order)
-    serializer = delivery_order_detailSerial(delivery_order_detail, many=True)
+    _delivery_order_detail = delivery_order_detail.objects.filter(order_id=_delivery_order)
+    serializer = delivery_order_detailSerial(_delivery_order_detail, many=True)
 
     
     return JsonResponse(serializer.data, safe=False)
